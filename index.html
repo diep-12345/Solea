@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="vi">
+<!DOCTYPE htm>
+<htm lang="vi">
 <head>
     <meta charset="UTF-8">
     <!-- thẻ meta có tên: viewport này để web có thể hiển thị trên mọi thiết bị -->
@@ -32,6 +32,52 @@
      href="style.css" dchi của trang css -->
     <!-- (cmt) -->
 </head>
-<body>
+<body class="flex flex-col min-h-screen text-gray-800">
+    <!-- HEADER / NAVIGATION BAR -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-pastel-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-3.5 flex items-center gap-4">
+            <!-- Logo -->
+            <div onclick="showPage('home')" class="cursor-pointer flex items-center space-x-2">
+                
+<img src="phần_ảnh_của_web/ảnh_logo.png"
+     alt="Soléa logo"
+     class="h-10 w-10 object-contain">
+
+<span class="text-3xl tracking-tight text-[#593b30]"
+      style="font-family:Georgia,serif">
+    Soléa
+</span>
+<!-- thẻ div dùng để chia web thành từng phần, tạo bố cục phục vụ việc trang trí -->
+            </div>
+
+            <!-- Menu Điều Hướng (Đã thêm VOUCHER) -->
+            <nav class="flex flex-1 justify-start ml-8 space-x-5 text-xs font-bold text-gray-600">
+                <button onclick="showPage('home')" class="nav-btn text-pastel-400 hover:text-pastel-400">Trang Chủ</button>
+                <button onclick="showPage('store')" class="nav-btn hover:text-pastel-400">Cửa Hàng</button>
+                <button onclick="showPage('themes')" class="nav-btn hover:text-pastel-400">Blog
+</button>
+                <button onclick="toggleVoucherModal()" class="nav-btn text-amber-500 hover:text-amber-600 flex items-center space-x-1">
+                    <i class="fa-solid fa-ticket"></i>
+                    <span>Voucher</span>
+                </button>
+            </nav>
+
+            <!-- Giỏ Hàng -->
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleCartModal()" class="relative p-2 text-gray-700 hover:text-pastel-400 transition" aria-label="Mở giỏ hàng">
+                    <i class="fa-solid fa-bag-shopping text-xl"></i>
+                    <span id="cart-badge" class="absolute top-0 right-0 bg-pastel-400 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                </button>
+                <!-- Nút Đăng nhập mới -->
+                <button onclick="toggleLoginModal()" class="flex items-center space-x-1 bg-pastel-50 border border-pastel-200 text-pastel-500 hover:bg-pastel-300 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition">
+                    <i class="fa-regular fa-user text-sm"></i>
+                    <span>Đăng nhập</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- JAVASCRIPT LOGIC (cho vo cmt) -->
+   <script src="script.js"></script>
 </body>
-</html>
+</htm>
