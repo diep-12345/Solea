@@ -9,12 +9,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
-from app.models.user import User
 from app.schemas.user import (
     UserRegister,
     UserLogin,
     UserResponse,
     TokenResponse
+)
+from app.repositories.user_repository import (
+    get_user_by_email,
+    get_user_by_phone,
+    create_user
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -29,29 +33,30 @@ EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 @router.post("/register", response_model=UserResponse)
 def register(data: UserRegister, db: Session = Depends(get_db)):
 
-    existing_user = db.query(User).filter(
-        (User.email == data.email) | (User.phone == data.phone)
-    ).first()
-
-    if existing_user:
+    # Kiểm tra email đã tồn tại
+    if get_user_by_email(db, data.email):
         raise HTTPException(
             status_code=400,
-            detail="Email hoặc số điện thoại đã được sử dụng"
+            detail="Email đã được sử dụng"
         )
 
-    new_user = User(
-        email=data.email,
-        phone=data.phone,
-        password_hash=password_hash.hash(data.password),
-        full_name=data.full_name,
-        role="user"
-    )
+    # Kiểm tra số điện thoại đã tồn tại
+    if get_user_by_phone(db, data.phone):
+        raise HTTPException(
+            status_code=400,
+            detail="Số điện thoại đã được sử dụng"
+        )
 
-    db.add(new_user)
+    hashed_password = password_hash.hash(data.password)
 
     try:
-        db.commit()
-        db.refresh(new_user)
+        new_user = create_user(
+            db=db,
+            email=data.email,
+            phone=data.phone,
+            password_hash=hashed_password,
+            full_name=data.full_name
+        )
     except IntegrityError:
         db.rollback()
         raise HTTPException(
@@ -59,18 +64,17 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
             detail="Email hoặc số điện thoại đã tồn tại"
         )
 
-    return new_user
+    return dict(new_user)
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
 
-    user = db.query(User).filter(
-        User.email == data.email
-    ).first()
+    user = get_user_by_email(db, data.email)
 
     if not user or not password_hash.verify(
-        data.password, user.password_hash
+        data.password,
+        user["password_hash"]
     ):
         raise HTTPException(
             status_code=401,
@@ -83,8 +87,8 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
     token = jwt.encode(
         {
-            "sub": str(user.user_id),
-            "role": user.role,
+            "sub": str(user["user_id"]),
+            "role": user["role"],
             "exp": expire
         },
         SECRET_KEY,
@@ -94,5 +98,5 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "role": user.role
+        "role": user["role"]
     }
