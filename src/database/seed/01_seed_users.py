@@ -1,6 +1,13 @@
 from db_connect import get_connection
-from utils import fake, batch_insert, random_datetime
-import random
+from fashion_ecommerce.src.database.seed.utils import (
+    fake,
+    batch_insert,
+    random_datetime,
+    random_vn_phone,
+    random_email,
+    random_vn_address,
+    fake_bcrypt_hash,
+)
 
 NUM_USERS = 500 # 500 users  
 NUM_ADMINS = 5 # 5 admins
@@ -11,68 +18,104 @@ def seed():
     cur = conn.cursor()
 
     users_data = []
+    used_phones = set()
+    used_emails = set()
     
     # Tạo admins (role = 'admin')
+    admin_hash = fake_bcrypt_hash()     # tất cả admin dùng chung 1 hash
     for i in range(NUM_ADMINS):
-        users_data.append((
-            f"admin{i}@fashion.com",    #email
-            f"0901{i:06d}",     #sđt
-            "$2b$12$FAKEHASH_admin",    # Hash giả
-            f"Admin {i}",      # tên
-            None,       # avatar
-            "admin",     # role
-        ))
-            
-    #  Tạo users thường
-    used_phones = set()
-    for i in range(NUM_USERS):
-    # Đảm bảo phone unique
+        # SĐT admin unique
         while True:
-            phone = fake.phone_number()[:15]
+            phone = random_vn_phone()
             if phone not in used_phones:
                 used_phones.add(phone)
                 break
-                
+
+        email = f"admin{i}@gmail.com"
+        used_emails.add(email)
+
         users_data.append((
-            fake.unique.email(),    # email
-            phone,      # sđt
-            "$2b$12$FAKEHASH_user",   # pass giả
-            fake.name(),    # tên
-            f"https://i.pravatar.cc/150?u={i}",  # Ảnh avatar thật từ pravatar
-            "user",      #role
+            email,
+            phone,
+            admin_hash,
+            fake.name(),
+            None,                            
+            "admin",
+            random_datetime(730),   # tạo trong 2 năm qua
+        ))
+            
+    #  Tạo users thường
+    user_hash = fake_bcrypt_hash()      # tất cả user dùng chung 1 hash
+    for i in range(NUM_USERS):
+        full_name = fake.name()
+
+        # SĐT unique
+        while True:
+            phone = random_vn_phone()
+            if phone not in used_phones:
+                used_phones.add(phone)
+                break
+
+        # Email unique
+        while True:
+            email = random_email(full_name)
+            if email not in used_emails:
+                used_emails.add(email)
+                break
+
+        avatar = (
+            f"https://i.pravatar.cc/150?u={i}"
+            if i % 10 != 0
+            else None
+        )
+
+        users_data.append((
+            email,
+            phone,
+            user_hash,
+            full_name,
+            avatar,
+            "user",
+            random_datetime(730),
         ))
 
     batch_insert(cur, """
-        INSERT INTO users (email, phone, password_hash, full_name, avatar_url, role)
+        INSERT INTO users (email, phone, password_hash, full_name, avatar_url, role, created_at)
         VALUES %s
     """, users_data)
     conn.commit()
     print(f"Đã tạo {len(users_data)} users")
 
     # Tạo địa chỉ cho mỗi user
-    cur.execute("SELECT user_id FROM users ORDER BY user_id")
+    cur.execute("SELECT user_id FROM users WHERE role = 'user' ORDER BY user_id")
     user_ids = [r[0] for r in cur.fetchall()]
 
     addr_data = []
     for uid in user_ids:
         for j in range(ADDRESS_PER_USER):
+            province, district, ward, street_address = random_vn_address()
             addr_data.append((
                 uid,
                 fake.name(),
-                fake.phone_number()[:15],
-                f"{fake.street_address()}, {fake.city()}",
-                j == 0  # Địa chỉ đầu là mặc định
+                random_vn_phone(),
+                province,
+                district,
+                ward,
+                street_address,
+                j == 0,
             ))
-    
+
     batch_insert(cur, """
-        INSERT INTO user_addresses (user_id, receiver_name, receiver_phone, address_detail, is_default)
+        INSERT INTO user_addresses
+            (user_id, receiver_name, receiver_phone, province, district, ward, street_address, is_default)
         VALUES %s
     """, addr_data)
     conn.commit()
-    print(f"Đã tạo {len(addr_data)} addresses")
+    print(f"Đã tạo {len(addr_data)} addresses cho {len(user_ids)} users")
 
     cur.close()
     conn.close()
+
 
 if __name__ == "__main__":
     seed()
