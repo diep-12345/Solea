@@ -57,3 +57,79 @@ def create_user(
 
     db.commit()
     return result.mappings().first()
+
+def get_user_by_id(db: Session, user_id: int):
+    query = text("""
+        SELECT
+            user_id,
+            email,
+            phone,
+            full_name,
+            avatar_url,
+            role,
+            token_version,
+            created_at
+        FROM users
+        WHERE user_id = :user_id
+        LIMIT 1
+    """)
+
+    return db.execute(
+        query,
+        {"user_id": user_id}
+    ).mappings().first()
+
+def update_user_profile(db: Session, user_id: int, data: dict):
+    query = text("""
+        UPDATE users
+        SET
+            full_name = :full_name,
+            phone = :phone,
+            avatar_url = :avatar_url
+        WHERE user_id = :user_id
+        RETURNING
+            user_id, email, phone, full_name,
+            avatar_url, role, created_at
+    """)
+
+    result = db.execute(
+        query,
+        {**data, "user_id": user_id}
+    ).mappings().first()
+
+    db.commit()
+    return result
+
+
+def update_user_password(
+    db: Session,
+    user_id: int,
+    new_password_hash: str
+):
+    query = text("""
+        UPDATE users
+        SET
+            password_hash = :password_hash,
+            token_version = token_version + 1
+        WHERE user_id = :user_id
+    """)
+
+    db.execute(query, {
+        "password_hash": new_password_hash,
+        "user_id": user_id
+    })
+
+    db.commit()
+def get_password_hash_by_user_id(db: Session, user_id: int):
+    query = text("""
+        SELECT password_hash
+        FROM users
+        WHERE user_id = :user_id
+        LIMIT 1
+    """)
+
+    result = db.execute(
+        query, {"user_id": user_id}
+    ).mappings().first()
+
+    return result["password_hash"] if result else None
