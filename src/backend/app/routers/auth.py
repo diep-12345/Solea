@@ -21,26 +21,33 @@ from app.repositories.user_repository import (
     create_user
 )
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+router = APIRouter(
+    prefix="/api/auth",
+    tags=["Authentication"]
+)
 
 password_hash = PasswordHash.recommended()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
+EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60)
+)
 
 
+# 1. Đăng ký tài khoản
 @router.post("/register", response_model=UserResponse)
-def register(data: UserRegister, db: Session = Depends(get_db)):
-
-    # Kiểm tra email đã tồn tại
+def register(
+    data: UserRegister,
+    db: Session = Depends(get_db)
+):
     if get_user_by_email(db, data.email):
         raise HTTPException(
             status_code=400,
             detail="Email đã được sử dụng"
         )
 
-    # Kiểm tra số điện thoại đã tồn tại
     if get_user_by_phone(db, data.phone):
         raise HTTPException(
             status_code=400,
@@ -57,6 +64,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
             password_hash=hashed_password,
             full_name=data.full_name
         )
+
     except IntegrityError:
         db.rollback()
         raise HTTPException(
@@ -67,9 +75,12 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     return dict(new_user)
 
 
+# 2. Đăng nhập
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, db: Session = Depends(get_db)):
-
+def login(
+    data: UserLogin,
+    db: Session = Depends(get_db)
+):
     user = get_user_by_email(db, data.email)
 
     if not user or not password_hash.verify(
@@ -89,6 +100,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         {
             "sub": str(user["user_id"]),
             "role": user["role"],
+            "token_version": user["token_version"],
             "exp": expire
         },
         SECRET_KEY,
