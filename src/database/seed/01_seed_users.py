@@ -1,5 +1,5 @@
-from db_connect import get_connection
-from fashion_ecommerce.src.database.seed.utils import (
+from database.db.db_connect import get_connection
+from database.seed.utils import (
     fake,
     batch_insert,
     random_datetime,

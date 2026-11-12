@@ -95,7 +95,7 @@ def random_vn_address() -> tuple[str, str, str, str]:
     house = random.randint(1, 999)
     if random.random() < 0.3:   # 30% có hẻm
         house = f"{house}/{random.randint(1, 50)}"
-        street_address = f"Số {house} đường {random.choice(VN_STREETS)}"
+    street_address = f"Số {house} đường {random.choice(VN_STREETS)}"
     return (
         random.choice(VN_CITIES),
         random.choice(VN_DISTRICTS),
