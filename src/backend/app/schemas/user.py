@@ -17,10 +17,20 @@ class UserResponse(BaseModel):
     phone: str
     full_name: str
     role: str
-
+    avatar_url: str | None = None
     model_config = {"from_attributes": True}
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     role: str
+
+class UserUpdate(BaseModel):
+    full_name: str = Field(min_length=2, max_length=100)
+    phone: str = Field(min_length=10, max_length=20)
+    avatar_url: str | None = None
+
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str = Field(min_length=8)
