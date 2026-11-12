@@ -51,6 +51,13 @@ VN_DISTRICTS = [
     'Huyện Nhà Bè','Huyện Củ Chi','Huyện Hóc Môn',
 ]
 
+# Phường
+VN_WARDS = [
+    'Phường Bến Nghé', 'Phường Bến Thành', 'Phường Thảo Điền', 'Phường 1',
+    'Phường Dịch Vọng', 'Phường Trung Hòa', 'Phường Láng Hạ', 'Phường Hàng Bạc',
+    'Phường Thạch Thang', 'Phường An Hải Bắc',
+]
+
 # Miền email
 EMAIL_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com']
 
@@ -65,8 +72,8 @@ def remove_vn_accents(text: str) -> str:
 def random_vn_phone() -> str:
     # Sinh SĐT 
     prefix = random.choice(VN_PHONE_PREFIXES)               # 3 số đầu
-    suffix = ''.join(random.choices(string.digits, k=8))    # 8 số còn lại
-    return prefix + suffix                                  # tổng = 11 số
+    suffix = ''.join(random.choices(string.digits, k=7))    # 7 số còn lại
+    return prefix + suffix                                  # tổng 10 số
 
 
 def random_email(full_name: str = None) -> str:
@@ -83,14 +90,17 @@ def random_email(full_name: str = None) -> str:
     return f"{username}@{random.choice(EMAIL_DOMAINS)}"
 
 
-def random_vn_address() -> str:
+def random_vn_address() -> tuple[str, str, str, str]:
     # Sinh địa chỉ
     house = random.randint(1, 999)
     if random.random() < 0.3:   # 30% có hẻm
         house = f"{house}/{random.randint(1, 50)}"
+        street_address = f"Số {house} đường {random.choice(VN_STREETS)}"
     return (
-        f"Số {house} đường {random.choice(VN_STREETS)}, "
-        f"{random.choice(VN_DISTRICTS)}, {random.choice(VN_CITIES)}"
+        random.choice(VN_CITIES),
+        random.choice(VN_DISTRICTS),
+        random.choice(VN_WARDS),
+        street_address,
     )
 
 
