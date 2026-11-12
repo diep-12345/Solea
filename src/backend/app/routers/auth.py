@@ -3,11 +3,14 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+from app.core.security import bearer_scheme, get_current_user
 from app.database import get_db
 from app.schemas.user import (
     UserRegister,
@@ -20,6 +23,7 @@ from app.repositories.user_repository import (
     get_user_by_phone,
     create_user
 )
+from app.repositories.token_repository import revoke_token
 
 
 router = APIRouter(
@@ -111,4 +115,45 @@ def login(
         "access_token": token,
         "token_type": "bearer",
         "role": user["role"]
+    }
+
+
+# 3. Đăng xuất
+@router.post("/logout")
+def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(
+        bearer_scheme
+    ),
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    token = credentials.credentials
+
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"require": ["exp", "sub", "token_version"]}
+        )
+
+        expires_at = datetime.fromtimestamp(
+            payload["exp"],
+            tz=timezone.utc
+        )
+
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token không hợp lệ hoặc đã hết hạn"
+        )
+
+    revoke_token(
+        db,
+        token,
+        expires_at
+    )
+
+    return {
+        "message": "Đăng xuất thành công"
     }
