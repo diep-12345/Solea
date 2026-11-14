@@ -79,6 +79,96 @@
             updateCart();
         }
 
+// Bật / Tắt Modal Đăng nhập
+function toggleLoginModal() {
+    const modal = document.getElementById('login-modal');
+    modal.classList.toggle('hidden');
+}
+
+// Ẩn / Hiện mật khẩu
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+// Xử lý khi bấm Đăng nhập
+function handleLogin(event) {
+    event.preventDefault();
+    const accountInput = event.target.querySelector('input[type="text"]').value;
+    const displayName = accountInput.includes('@') ? accountInput.split('@')[0] : accountInput;
+
+    // Ẩn nút Đăng nhập, hiện nút Hồ sơ cá nhân trên Header
+    document.getElementById('header-login-btn').classList.add('hidden');
+    document.getElementById('header-profile-btn').classList.remove('hidden');
+    document.getElementById('header-user-name').textContent = displayName;
+
+    // Cập nhật thông tin vào trang Hồ sơ
+    document.getElementById('profile-display-name').textContent = displayName;
+    document.getElementById('profile-display-email').textContent = accountInput;
+    document.getElementById('input-profile-name').value = displayName;
+
+    alert('Chào mừng ' + displayName + ' quay trở lại Soléa!');
+    toggleLoginModal();
+}
+
+// Chuyển đổi qua lại giữa 2 tab trong trang Hồ sơ
+function switchProfileTab(tabName) {
+    const infoTab = document.getElementById('profile-tab-info');
+    const ordersTab = document.getElementById('profile-tab-orders');
+
+    if (tabName === 'info') {
+        infoTab.classList.remove('hidden');
+        ordersTab.classList.add('hidden');
+    } else {
+        infoTab.classList.add('hidden');
+        ordersTab.classList.remove('hidden');
+    }
+}
+
+// Lưu thay đổi thông tin cá nhân
+function saveProfileInfo(event) {
+    event.preventDefault();
+    const newName = document.getElementById('input-profile-name').value;
+    document.getElementById('profile-display-name').textContent = newName;
+    document.getElementById('header-user-name').textContent = newName;
+    alert('Đã cập nhật hồ sơ và số đo thành công!');
+}
+
+// Đăng xuất
+function logoutUser() {
+    document.getElementById('header-profile-btn').classList.add('hidden');
+    document.getElementById('header-login-btn').classList.remove('hidden');
+    alert('Bạn đã đăng xuất khỏi tài khoản.');
+    showPage('home'); // Quay về trang chủ
+}
+
+// Chuyển đổi qua lại giữa Đăng nhập và Đăng ký
+function switchAuthMode(mode) {
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const title = document.getElementById('auth-modal-title');
+    const switchText = document.getElementById('auth-switch-text');
+
+    if (mode === 'register') {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        title.textContent = 'Đăng ký Soléa';
+        switchText.innerHTML = 'Đã có tài khoản? <button type="button" onclick="switchAuthMode(\'login\')" class="text-pastel-400 font-bold hover:underline">Đăng nhập</button>';
+    } else {
+        registerForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        title.textContent = 'Đăng nhập Soléa';
+        switchText.innerHTML = 'Chưa có tài khoản? <button type="button" onclick="switchAuthMode(\'register\')" class="text-pastel-400 font-bold hover:underline">Đăng ký ngay</button>';
+    }
+}
+
         function updateCart() {
             cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
             document.getElementById('cart-badge').innerText = cartCount;
